@@ -16,3 +16,8 @@ Thumbs.db
 # ログ
 *.log
 npm-debug.log*
+
+# スクリプト・一時ファイル
+*.mjs
+*.png
+tsconfig.tsbuildinfo
