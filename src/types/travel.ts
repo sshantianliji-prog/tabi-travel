@@ -21,12 +21,14 @@ export type Interest =
 export type AccommodationType = 'luxury' | 'business' | 'ryokan' | 'guesthouse';
 export type TravelStyle = 'relaxed' | 'active' | 'gourmet-focus' | 'sightseeing';
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
+export type TransportMethod = 'shinkansen' | 'plane' | 'car' | 'local-train' | 'highway-bus' | 'ferry' | 'any';
 
 export interface TravelPreferences {
   travelType: TravelType;
   duration: Duration;
   budget: Budget;
   departureRegion?: Region;
+  transportMethod?: TransportMethod;
   region: Region;
   travelDate?: string; // YYYY-MM-DD形式
   interests: Interest[];
@@ -34,6 +36,27 @@ export interface TravelPreferences {
   travelStyle?: TravelStyle;
   season?: Season;
 }
+
+// ── TransportMethod Labels & Icons ──────────────────────────────────────────
+export const TRANSPORT_METHOD_LABELS: Record<TransportMethod, string> = {
+  shinkansen:    '新幹線',
+  plane:         '飛行機',
+  car:           '車（ドライブ）',
+  'local-train': '在来線・特急',
+  'highway-bus': '高速バス',
+  ferry:         'フェリー・船',
+  any:           'AIにおまかせ',
+};
+
+export const TRANSPORT_METHOD_ICONS: Record<TransportMethod, string> = {
+  shinkansen:    '🚅',
+  plane:         '✈️',
+  car:           '🚗',
+  'local-train': '🚃',
+  'highway-bus': '🚌',
+  ferry:         '⛴️',
+  any:           '✨',
+};
 
 // ── Labels ──────────────────────────────────────────────
 

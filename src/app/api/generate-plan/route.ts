@@ -10,6 +10,7 @@ import {
   ACCOMMODATION_LABELS,
   TRAVEL_STYLE_LABELS,
   SEASON_LABELS,
+  TRANSPORT_METHOD_LABELS,
 } from '@/types/travel';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -40,9 +41,18 @@ const PERSONA_SYSTEM = `あなたは「タビ」という名前の日本旅行�
 function buildPrompt(prefs: TravelPreferences): string {
   const interests = prefs.interests.map((i) => INTEREST_LABELS[i]).join('、');
   const departure = prefs.departureRegion ? REGION_LABELS[prefs.departureRegion] : null;
+
+  const transportMethodLabel = prefs.transportMethod && prefs.transportMethod !== 'any'
+    ? TRANSPORT_METHOD_LABELS[prefs.transportMethod]
+    : null;
+
   const transportLine = departure
     ? `- 出発地: ${departure}（往復交通費を予算に含めること）`
     : `- 出発地: 指定なし（交通費は現地移動分のみ）`;
+
+  const transportMethodLine = transportMethodLabel
+    ? `- 移動手段: ${transportMethodLabel}（この移動手段を使ったルートでプランを作成すること。スケジュールの最初に乗車・搭乗情報と費用を記載すること）`
+    : '';
 
   const dateLine = prefs.travelDate
     ? `- 旅行開始日: ${prefs.travelDate}（この日程に合わせたイベント・季節情報を反映すること）`
@@ -55,6 +65,7 @@ function buildPrompt(prefs: TravelPreferences): string {
 - 期間: ${DURATION_LABELS[prefs.duration]}
 - 予算: ${BUDGET_LABELS[prefs.budget]}（1人あたり・往復交通費含む総額）
 ${transportLine}
+${transportMethodLine}
 - 目的地: ${REGION_LABELS[prefs.region]}
 ${dateLine}
 - 興味・テーマ: ${interests}

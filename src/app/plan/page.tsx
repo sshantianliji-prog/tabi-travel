@@ -3,13 +3,14 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  TravelType, Duration, Budget, Region, Interest, AccommodationType, TravelStyle, Season,
+  TravelType, Duration, Budget, Region, Interest, AccommodationType, TravelStyle, Season, TransportMethod,
   TravelPreferences,
   TRAVEL_TYPE_LABELS, DURATION_LABELS, BUDGET_LABELS, REGION_LABELS, REGION_ICONS, REGION_GROUPS,
   INTEREST_LABELS, INTEREST_ICONS,
   ACCOMMODATION_LABELS, ACCOMMODATION_ICONS,
   TRAVEL_STYLE_LABELS, TRAVEL_STYLE_ICONS,
   SEASON_LABELS, SEASON_ICONS,
+  TRANSPORT_METHOD_LABELS, TRANSPORT_METHOD_ICONS,
 } from '@/types/travel';
 
 const TRAVEL_TYPE_ICONS: Record<TravelType, string> = { solo: '🧳', couple: '💑', friends: '👫', family: '👨‍👩‍👧‍👦' };
@@ -19,7 +20,7 @@ const BUDGET_ICONS: Record<Budget, string> = {
   '80k-120k': '✨', '120k-200k': '💎', '200k-300k': '👑', 'over300k': '🌟',
 };
 
-const STEPS = ['旅行タイプ', '期間', '予算', '出発地', '目的地', '旅行日程', '興味テーマ', '宿泊スタイル', 'スタイル・季節'];
+const STEPS = ['旅行タイプ', '期間', '予算', '出発地', '目的地', '移動手段', '旅行日程', '興味テーマ', '宿泊スタイル', 'スタイル・季節'];
 
 function PlanContent() {
   const router = useRouter();
@@ -197,8 +198,25 @@ function PlanContent() {
           </StepSection>
         )}
 
-        {/* Step 5: Travel Date */}
+        {/* Step 5: Transport Method */}
         {step === 5 && (
+          <StepSection title="どうやって移動しますか？">
+            <p className="text-center text-sm text-gray-500 mb-5">
+              {prefs.departureRegion
+                ? `${REGION_LABELS[prefs.departureRegion]} → ${prefs.region ? REGION_LABELS[prefs.region] : '目的地'} の移動手段`
+                : '目的地への移動手段を選んでください'}
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {(Object.keys(TRANSPORT_METHOD_LABELS) as TransportMethod[]).map((key) => (
+                <ChoiceCard key={key} icon={TRANSPORT_METHOD_ICONS[key]} label={TRANSPORT_METHOD_LABELS[key]}
+                  selected={prefs.transportMethod === key} onClick={() => selectSingle('transportMethod', key)} />
+              ))}
+            </div>
+          </StepSection>
+        )}
+
+        {/* Step 6: Travel Date */}
+        {step === 6 && (
           <StepSection title="いつ旅行しますか？">
             <p className="text-center text-sm text-gray-500 mb-6">日付を選ぶとより具体的なプランになります</p>
             <div className="mb-4">
@@ -236,8 +254,8 @@ function PlanContent() {
           </StepSection>
         )}
 
-        {/* Step 6: Interests */}
-        {step === 6 && (
+        {/* Step 7: Interests */}
+        {step === 7 && (
           <StepSection title="興味のあるテーマ（複数OK）">
             <div className="grid grid-cols-2 gap-3 mb-6">
               {(Object.keys(INTEREST_LABELS) as Interest[]).map((key) => (
@@ -252,8 +270,8 @@ function PlanContent() {
           </StepSection>
         )}
 
-        {/* Step 7: Accommodation */}
-        {step === 7 && (
+        {/* Step 8: Accommodation */}
+        {step === 8 && (
           <StepSection title="どんな宿に泊まりたい？">
             <div className="grid grid-cols-2 gap-4">
               {(Object.keys(ACCOMMODATION_LABELS) as AccommodationType[]).map((key) => (
@@ -263,8 +281,8 @@ function PlanContent() {
           </StepSection>
         )}
 
-        {/* Step 8: Travel Style + Season */}
-        {step === 8 && (
+        {/* Step 9: Travel Style + Season */}
+        {step === 9 && (
           <StepSection title="旅のスタイルと季節">
             <p className="text-xs font-bold text-gray-400 tracking-wider mb-3">旅のスタイル</p>
             <div className="grid grid-cols-2 gap-3 mb-6">
