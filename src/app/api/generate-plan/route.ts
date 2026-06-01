@@ -44,6 +44,10 @@ function buildPrompt(prefs: TravelPreferences): string {
     ? `- 出発地: ${departure}（往復交通費を予算に含めること）`
     : `- 出発地: 指定なし（交通費は現地移動分のみ）`;
 
+  const dateLine = prefs.travelDate
+    ? `- 旅行開始日: ${prefs.travelDate}（この日程に合わせたイベント・季節情報を反映すること）`
+    : '';
+
   return `以下の旅行条件に合わせて、実在する具体的な施設・お店・スポット名を使ったリアルで魅力的な旅行プランを作成してください。
 
 【旅行条件】
@@ -52,6 +56,7 @@ function buildPrompt(prefs: TravelPreferences): string {
 - 予算: ${BUDGET_LABELS[prefs.budget]}（1人あたり・往復交通費含む総額）
 ${transportLine}
 - 目的地: ${REGION_LABELS[prefs.region]}
+${dateLine}
 - 興味・テーマ: ${interests}
 - 宿泊スタイル: ${prefs.accommodationType ? ACCOMMODATION_LABELS[prefs.accommodationType] : '指定なし'}
 - 旅のスタイル: ${prefs.travelStyle ? TRAVEL_STYLE_LABELS[prefs.travelStyle] : '指定なし'}

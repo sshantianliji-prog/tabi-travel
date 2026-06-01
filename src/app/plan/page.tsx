@@ -19,7 +19,7 @@ const BUDGET_ICONS: Record<Budget, string> = {
   '80k-120k': '✨', '120k-200k': '💎', '200k-300k': '👑', 'over300k': '🌟',
 };
 
-const STEPS = ['旅行タイプ', '期間', '予算', '出発地', '目的地', '興味テーマ', '宿泊スタイル', 'スタイル・季節'];
+const STEPS = ['旅行タイプ', '期間', '予算', '出発地', '目的地', '旅行日程', '興味テーマ', '宿泊スタイル', 'スタイル・季節'];
 
 function PlanContent() {
   const router = useRouter();
@@ -143,7 +143,7 @@ function PlanContent() {
 
         {/* Step 2: Budget */}
         {step === 2 && (
-          <StepSection title="予算はどのくらい？（1人あたり・交通費込み）">
+          <StepSection title="予算は？（1人あたり・交通費込み）">
             <div className="grid grid-cols-2 gap-3">
               {(Object.keys(BUDGET_LABELS) as Budget[]).map((key) => (
                 <ChoiceCard key={key} icon={BUDGET_ICONS[key]} label={BUDGET_LABELS[key]} selected={prefs.budget === key} onClick={() => selectSingle('budget', key)} />
@@ -156,7 +156,7 @@ function PlanContent() {
         {step === 3 && (
           <StepSection title="どこから出発しますか？">
             <p className="text-center text-sm text-gray-500 mb-4">出発地を選ぶと交通費もプランに含まれます</p>
-            <div className="max-h-[360px] overflow-y-auto pr-1 space-y-5 mb-4">
+            <div className="overflow-y-auto pr-1 space-y-5 mb-4" style={{ maxHeight: 'calc(100vh - 320px)' }}>
               {REGION_GROUPS.filter(g => g.label !== 'おまかせ').map((group) => (
                 <div key={group.label}>
                   <p className="text-xs font-bold text-gray-400 tracking-wider mb-2">{group.label}</p>
@@ -168,7 +168,7 @@ function PlanContent() {
                 </div>
               ))}
             </div>
-            <button onClick={advance} className="w-full py-3 border border-gray-300 text-gray-500 rounded-2xl text-sm hover:bg-gray-50 transition-all">
+            <button onClick={advance} className="w-full py-3 border border-gray-300 text-gray-500 rounded-2xl text-sm hover:bg-gray-50 transition-all sticky bottom-4 bg-white">
               スキップ（出発地を指定しない）
             </button>
           </StepSection>
@@ -192,8 +192,47 @@ function PlanContent() {
           </StepSection>
         )}
 
-        {/* Step 5: Interests */}
+        {/* Step 5: Travel Date */}
         {step === 5 && (
+          <StepSection title="いつ旅行しますか？">
+            <p className="text-center text-sm text-gray-500 mb-6">日付を選ぶとより具体的なプランになります</p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">旅行開始日</label>
+              <input
+                type="date"
+                value={prefs.travelDate ?? ''}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={(e) => setPrefs((p) => ({ ...p, travelDate: e.target.value }))}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:border-sky-400 focus:outline-none"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              {[7, 14, 30, 60, 90].map((days) => {
+                const d = new Date(); d.setDate(d.getDate() + days);
+                const str = d.toISOString().split('T')[0];
+                const label = days === 7 ? '来週' : days === 14 ? '2週間後' : days === 30 ? '1ヶ月後' : days === 60 ? '2ヶ月後' : '3ヶ月後';
+                return (
+                  <button key={days} onClick={() => { setPrefs((p) => ({ ...p, travelDate: str })); setTimeout(advance, 200); }}
+                    className={`py-2 px-3 rounded-xl border-2 text-xs font-medium transition-all ${prefs.travelDate === str ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-gray-200 text-gray-600 hover:border-sky-300'}`}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={advance} className="flex-1 py-3 border border-gray-300 text-gray-500 rounded-2xl text-sm hover:bg-gray-50 transition-all">
+                スキップ
+              </button>
+              <button onClick={advance} disabled={!prefs.travelDate}
+                className="flex-1 py-3 bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold rounded-2xl disabled:opacity-40 transition-all">
+                次へ →
+              </button>
+            </div>
+          </StepSection>
+        )}
+
+        {/* Step 6: Interests */}
+        {step === 6 && (
           <StepSection title="興味のあるテーマ（複数OK）">
             <div className="grid grid-cols-2 gap-3 mb-6">
               {(Object.keys(INTEREST_LABELS) as Interest[]).map((key) => (
@@ -208,8 +247,8 @@ function PlanContent() {
           </StepSection>
         )}
 
-        {/* Step 6: Accommodation */}
-        {step === 6 && (
+        {/* Step 7: Accommodation */}
+        {step === 7 && (
           <StepSection title="どんな宿に泊まりたい？">
             <div className="grid grid-cols-2 gap-4">
               {(Object.keys(ACCOMMODATION_LABELS) as AccommodationType[]).map((key) => (
@@ -219,8 +258,8 @@ function PlanContent() {
           </StepSection>
         )}
 
-        {/* Step 7: Travel Style + Season */}
-        {step === 7 && (
+        {/* Step 8: Travel Style + Season */}
+        {step === 8 && (
           <StepSection title="旅のスタイルと季節">
             <p className="text-xs font-bold text-gray-400 tracking-wider mb-3">旅のスタイル</p>
             <div className="grid grid-cols-2 gap-3 mb-6">

@@ -46,6 +46,64 @@ function tryParseJson(text: string): TravelPlan | null {
   return null;
 }
 
+const LOADING_MESSAGES = [
+  { icon: '🗺️', text: '最適なルートを考えています...' },
+  { icon: '🏨', text: '実在するホテルを本気で選んでいます...' },
+  { icon: '🍜', text: 'おすすめレストランを探しています...' },
+  { icon: '📸', text: 'インスタ映えスポットを確認中...' },
+  { icon: '🚅', text: '交通手段と時刻を調べています...' },
+  { icon: '💴', text: '予算に合わせて費用を計算中...' },
+  { icon: '⛩️', text: '観光スポットを厳選しています...' },
+  { icon: '✨', text: 'あなただけのプランを仕上げています...' },
+];
+
+function LoadingScreen() {
+  const [msgIndex, setMsgIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const msgTimer = setInterval(() => {
+      setMsgIndex((i) => (i + 1) % LOADING_MESSAGES.length);
+    }, 2800);
+    const progTimer = setInterval(() => {
+      setProgress((p) => Math.min(p + 1.2, 90));
+    }, 400);
+    return () => { clearInterval(msgTimer); clearInterval(progTimer); };
+  }, []);
+
+  const msg = LOADING_MESSAGES[msgIndex];
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-gradient-to-br from-sky-50 via-white to-indigo-50">
+      <div className="w-full max-w-sm">
+        {/* アイコン */}
+        <div className="text-center mb-8">
+          <div className="text-7xl mb-2 transition-all duration-500" key={msgIndex}>{msg.icon}</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-1">タビがプランを作成中</h2>
+          <p className="text-sm text-sky-600 font-medium min-h-[20px] transition-all duration-300">{msg.text}</p>
+        </div>
+
+        {/* プログレスバー */}
+        <div className="bg-gray-100 rounded-full h-2 mb-4 overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-sky-500 to-indigo-600 rounded-full transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <p className="text-center text-xs text-gray-400">通常10〜30秒かかります</p>
+
+        {/* タビのひとこと */}
+        <div className="mt-8 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <p className="text-xs text-gray-500 leading-relaxed">
+            💡 <span className="font-medium text-gray-700">タビより：</span>
+            実在するお店・ホテルを1つずつ確認しながら作っています。少しお待ちください。
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TransportFareCard({ fare, from, to }: { fare: TransportFareType; from: string; to: string }) {
   return (
     <div className="bg-white rounded-2xl mb-6 shadow-sm border border-gray-100 overflow-hidden">
@@ -158,6 +216,98 @@ function BookingAdviceSection({ text }: { text: string }) {
             <p className="text-sm text-gray-700 leading-relaxed">{item}</p>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+const QUICK_REQUESTS = [
+  'もっとグルメ重視に変えて',
+  '予算を抑えたバージョンに',
+  '観光スポットを増やして',
+  '宿泊先を高級ホテルに変えて',
+  'のんびりペースに調整して',
+  '地元グルメをもっと入れて',
+];
+
+function PlanChat({ plan, onUpdate }: { plan: TravelPlan; onUpdate: (p: TravelPlan) => void }) {
+  const [msg, setMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<{ role: 'user' | 'tabi'; text: string }[]>([]);
+
+  async function send(text: string) {
+    if (!text.trim() || loading) return;
+    const userMsg = text.trim();
+    setMsg('');
+    setHistory(h => [...h, { role: 'user', text: userMsg }]);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/refine-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan, message: userMsg }),
+      });
+      const data = await res.json();
+      if (data.__error) throw new Error(data.__error);
+      onUpdate(data as TravelPlan);
+      setHistory(h => [...h, { role: 'tabi', text: `「${userMsg}」を反映してプランを修正しました！上のプランを確認してください。` }]);
+    } catch (e) {
+      setHistory(h => [...h, { role: 'tabi', text: `修正に失敗しました。もう一度お試しください。` }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl mb-6 shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-gradient-to-r from-sky-500 to-indigo-600 px-6 py-4">
+        <h3 className="font-bold text-white text-base">💬 タビにプランの修正を依頼する</h3>
+        <p className="text-sky-100 text-xs mt-0.5">「もっとグルメ重視に」など自由に伝えてください</p>
+      </div>
+
+      {/* クイックリクエスト */}
+      <div className="px-4 pt-4 pb-2 flex flex-wrap gap-2">
+        {QUICK_REQUESTS.map((q) => (
+          <button key={q} onClick={() => send(q)} disabled={loading}
+            className="text-xs px-3 py-1.5 bg-sky-50 text-sky-600 border border-sky-200 rounded-full hover:bg-sky-100 transition-colors disabled:opacity-40">
+            {q}
+          </button>
+        ))}
+      </div>
+
+      {/* 会話履歴 */}
+      {history.length > 0 && (
+        <div className="px-4 py-2 space-y-2 max-h-48 overflow-y-auto">
+          {history.map((h, i) => (
+            <div key={i} className={`flex ${h.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${h.role === 'user' ? 'bg-sky-500 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                {h.text}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div className="flex justify-start">
+              <div className="bg-gray-100 text-gray-500 px-3 py-2 rounded-2xl text-sm">タビが修正中...</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 入力欄 */}
+      <div className="px-4 pb-4 pt-2 flex gap-2">
+        <input
+          type="text"
+          value={msg}
+          onChange={(e) => setMsg(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && send(msg)}
+          placeholder="修正リクエストを入力..."
+          disabled={loading}
+          className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-sky-400 focus:outline-none disabled:opacity-50"
+        />
+        <button onClick={() => send(msg)} disabled={!msg.trim() || loading}
+          className="px-4 py-2.5 bg-sky-500 text-white rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors disabled:opacity-40">
+          送信
+        </button>
       </div>
     </div>
   );
@@ -299,13 +449,7 @@ function ResultContent() {
   }, [searchParams, router]);
 
   if (streaming || (!plan && !error)) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-6 px-4">
-        <div className="text-6xl animate-bounce">✈️</div>
-        <p className="text-xl font-semibold text-gray-700">タビがプランを作成中...</p>
-        <p className="text-sm text-gray-400">実在するホテル・レストランを本気で選んでいます</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (error) {
@@ -388,10 +532,21 @@ function ResultContent() {
         <BookingLinks destination={plan.destination} />
         <ShareButtons title={plan.title} destination={plan.destination} />
 
-        <Link href="/plan"
-          className="block w-full py-4 border-2 border-sky-500 text-sky-600 font-semibold rounded-2xl text-center hover:bg-sky-50 transition-colors">
-          もう一度作る
-        </Link>
+        {/* チャットでプランを修正 */}
+        <PlanChat plan={plan} onUpdate={setPlan} />
+
+        {/* 再生成・最初からボタン */}
+        <div className="flex gap-3 mb-4">
+          <button
+            onClick={() => { window.location.reload(); }}
+            className="flex-1 py-4 bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold rounded-2xl hover:shadow-lg transition-all text-sm">
+            🔄 別のプランを生成する
+          </button>
+          <Link href="/plan"
+            className="flex-1 py-4 border-2 border-gray-300 text-gray-600 font-semibold rounded-2xl text-center hover:bg-gray-50 transition-colors text-sm">
+            ✏️ 条件を変えて作る
+          </Link>
+        </div>
       </div>
     </main>
   );

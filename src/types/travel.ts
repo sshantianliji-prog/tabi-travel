@@ -28,6 +28,7 @@ export interface TravelPreferences {
   budget: Budget;
   departureRegion?: Region;
   region: Region;
+  travelDate?: string; // YYYY-MM-DD形式
   interests: Interest[];
   accommodationType?: AccommodationType;
   travelStyle?: TravelStyle;
