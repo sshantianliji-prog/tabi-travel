@@ -61,7 +61,7 @@ function buildPrompt(prefs: TravelPreferences): string {
   return `以下の旅行条件に合わせて、実在する具体的な施設・お店・スポット名を使ったリアルで魅力的な旅行プランを作成してください。
 
 【旅行条件】
-- 旅行タイプ: ${TRAVEL_TYPE_LABELS[prefs.travelType]}
+- 旅行タイプ: ${TRAVEL_TYPE_LABELS[prefs.travelType]}${prefs.groupSize ? `（${prefs.groupSize}人）` : ''}
 - 期間: ${DURATION_LABELS[prefs.duration]}
 - 予算: ${BUDGET_LABELS[prefs.budget]}（1人あたり・往復交通費含む総額）
 ${transportLine}

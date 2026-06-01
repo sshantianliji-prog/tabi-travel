@@ -25,6 +25,7 @@ export type TransportMethod = 'shinkansen' | 'plane' | 'car' | 'local-train' | '
 
 export interface TravelPreferences {
   travelType: TravelType;
+  groupSize?: number;
   duration: Duration;
   budget: Budget;
   departureRegion?: Region;
