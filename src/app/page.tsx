@@ -1,91 +1,122 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+
+const FLOAT_ICONS = ['✈️','🗾','🏔️','🌸','🍜','⛩️','🌊','🏖️','🎋','🍣','🦌','♨️','🚅','🎌','🌅','🍱','🏯','🌺'];
+
+function FloatingIcons() {
+  const [icons, setIcons] = useState<{ id: number; icon: string; left: number; delay: number; duration: number; size: number }[]>([]);
+
+  useEffect(() => {
+    const items = Array.from({ length: 18 }, (_, i) => ({
+      id: i,
+      icon: FLOAT_ICONS[i % FLOAT_ICONS.length],
+      left: Math.random() * 100,
+      delay: Math.random() * 12,
+      duration: 10 + Math.random() * 12,
+      size: 1.2 + Math.random() * 1.6,
+    }));
+    setIcons(items);
+  }, []);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {icons.map((item) => (
+        <span
+          key={item.id}
+          className="float-icon"
+          style={{
+            left: `${item.left}%`,
+            fontSize: `${item.size}rem`,
+            animationDelay: `${item.delay}s`,
+            animationDuration: `${item.duration}s`,
+            opacity: 0,
+          }}
+        >
+          {item.icon}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export default function Home() {
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-indigo-50">
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => { setTimeout(() => setLoaded(true), 100); }, []);
 
-      {/* Hero */}
-      <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center pb-16">
-        <div className="inline-flex items-center gap-2 bg-sky-100 text-sky-700 text-sm font-medium px-4 py-2 rounded-full mb-6">
-          ✨ 完全無料 — 旅行プランを今すぐ作成
+  return (
+    <main className="min-h-screen relative overflow-hidden bg-gradient-to-br from-sky-950 via-indigo-900 to-purple-900">
+
+      {/* 浮遊アイコン背景 */}
+      <FloatingIcons />
+
+      {/* 星みたいなドット背景 */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+
+      {/* コンテンツ */}
+      <div className={`relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center transition-all duration-700 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+
+        {/* バッジ */}
+        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs font-medium px-4 py-2 rounded-full mb-8">
+          <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+          完全無料 — 今すぐ旅行プランを作成
         </div>
 
-        <div className="text-7xl mb-4">✈️</div>
-
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
-          旅行、もっと
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-600">気軽に。</span>
+        {/* メインタイトル */}
+        <h1 className="text-5xl md:text-7xl font-black mb-4 leading-tight tracking-tight">
+          <span className="text-white">旅行、もっと</span>
+          <br />
+          <span className="hero-gradient-text">気軽に。</span>
         </h1>
 
-        <p className="text-lg text-gray-500 mb-3 max-w-lg">
-          AI旅行コンシェルジュ「タビ」が、実在するホテル・レストラン・観光スポットを組み合わせた<strong className="text-gray-700">本物の旅行プランを無料で作成</strong>します。
+        <p className="text-white/70 text-lg md:text-xl mb-3 max-w-lg leading-relaxed">
+          AI旅行コンシェルジュ「タビ」が<br className="hidden sm:block" />
+          <span className="text-white font-semibold">実在するホテル・グルメ・観光スポット</span>を組み合わせた<br className="hidden sm:block" />
+          あなただけのプランを<span className="text-emerald-400 font-bold">無料</span>で作成
         </p>
-        <p className="text-sm text-gray-400 mb-10">
-          選ぶだけ・3分で完成 — 子どもからお年寄りまで、どなたでも
-        </p>
+        <p className="text-white/40 text-sm mb-10">選ぶだけ・3分で完成 · 登録不要</p>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        {/* CTAボタン */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-12">
           <Link href="/plan"
-            className="px-10 py-4 bg-gradient-to-r from-sky-500 to-indigo-600 text-white text-lg font-semibold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200">
-            ひとりで計画する →
+            className="pulse-cta px-10 py-5 bg-gradient-to-r from-sky-400 to-indigo-500 text-white text-lg font-bold rounded-full shadow-2xl hover:shadow-sky-500/40 hover:scale-105 transition-all duration-200">
+            ✈️ ひとりで計画する
           </Link>
           <Link href="/plan?mode=group"
-            className="px-10 py-4 bg-white border-2 border-sky-400 text-sky-600 text-lg font-semibold rounded-full shadow hover:shadow-lg hover:scale-105 transition-all duration-200">
+            className="px-10 py-5 bg-white/10 backdrop-blur-sm border border-white/30 text-white text-lg font-semibold rounded-full hover:bg-white/20 hover:scale-105 transition-all duration-200">
             👥 グループで計画する
           </Link>
         </div>
 
-        <p className="text-xs text-gray-400">登録不要・クレジットカード不要・完全無料</p>
+        {/* 特徴3点 */}
+        <div className="grid grid-cols-3 gap-4 max-w-lg w-full mb-16">
+          {[
+            { icon: '⚡', label: '3分で完成' },
+            { icon: '🏨', label: '実在施設を提案' },
+            { icon: '👥', label: 'グループ対応' },
+          ].map((f) => (
+            <div key={f.label} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl py-3 px-2 text-center">
+              <div className="text-2xl mb-1">{f.icon}</div>
+              <p className="text-white/80 text-xs font-medium">{f.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ミッション */}
+        <div className="max-w-lg bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl px-6 py-5">
+          <p className="text-white/50 text-xs mb-1">タビのミッション</p>
+          <p className="text-white/90 text-sm font-medium leading-relaxed">
+            「老若男女すべての人々が、もっと気軽に<br className="hidden sm:block" />旅行に行くきっかけを創出したい」
+          </p>
+        </div>
       </div>
 
-      {/* Features */}
-      <div className="max-w-4xl mx-auto px-4 pb-20">
-        <p className="text-center text-sm font-bold text-gray-400 tracking-widest mb-10">タビが選ばれる理由</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-          {[
-            { icon: '🎯', title: '選ぶだけ・3分完成', desc: '旅行タイプ・予算・エリアなど7つの項目を選ぶだけ。難しい入力や調査は一切不要' },
-            { icon: '🏨', title: '実在するスポットを提案', desc: 'AIが実在するホテル・レストラン・観光スポットを選んでプランに組み込みます' },
-            { icon: '👥', title: 'グループ旅行も解決', desc: 'みんなの希望を入力してAIが全員が満足できるプランを自動で作成。「どこ行く？」問題を解決' },
-          ].map((f) => (
-            <div key={f.title} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="text-3xl mb-3">{f.icon}</div>
-              <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Mission */}
-        <div className="bg-gradient-to-r from-sky-500 to-indigo-600 rounded-3xl p-8 text-white text-center mb-16">
-          <p className="text-sm font-medium opacity-80 mb-2">タビのミッション</p>
-          <h2 className="text-2xl font-bold mb-3">「老若男女すべての人々が、<br className="hidden sm:block" />もっと気軽に旅行に行くきっかけを」</h2>
-          <p className="text-sm opacity-80">旅行の計画が面倒で諦めていた方、どこに行けばいいかわからない方、<br className="hidden sm:block" />グループでまとまらない方——タビが全部解決します。</p>
-        </div>
-
-        {/* How it works */}
-        <p className="text-center text-sm font-bold text-gray-400 tracking-widest mb-8">使い方は3ステップ</p>
-        <div className="flex flex-col md:flex-row gap-4 mb-16">
-          {[
-            { step: '1', title: '条件を選ぶ', desc: '旅行タイプ・期間・予算・地域などを選択' },
-            { step: '2', title: 'タビがプランを作成', desc: 'AIが実在するスポットを組み合わせて数秒で完成' },
-            { step: '3', title: '旅に出かける', desc: 'プランをシェアして、そのまま予約サイトへ' },
-          ].map((s) => (
-            <div key={s.step} className="flex-1 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-sky-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mx-auto mb-3">{s.step}</div>
-              <h3 className="font-semibold text-gray-900 mb-1">{s.title}</h3>
-              <p className="text-sm text-gray-500">{s.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* CTA Bottom */}
-        <div className="text-center">
-          <Link href="/plan"
-            className="inline-block px-12 py-5 bg-gradient-to-r from-sky-500 to-indigo-600 text-white text-xl font-bold rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-200">
-            無料でプランを作る →
-          </Link>
-          <p className="text-xs text-gray-400 mt-3">47都道府県対応 · グループ旅行対応 · 完全無料</p>
-        </div>
+      {/* 下スクロールのヒント */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce">
+        <div className="w-px h-8 bg-white/20" />
+        <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
       </div>
 
     </main>

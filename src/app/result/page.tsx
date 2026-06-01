@@ -47,14 +47,14 @@ function tryParseJson(text: string): TravelPlan | null {
 }
 
 const LOADING_MESSAGES = [
-  { icon: '🗺️', text: '最適なルートを考えています...' },
-  { icon: '🏨', text: '実在するホテルを本気で選んでいます...' },
-  { icon: '🍜', text: 'おすすめレストランを探しています...' },
-  { icon: '📸', text: 'インスタ映えスポットを確認中...' },
-  { icon: '🚅', text: '交通手段と時刻を調べています...' },
-  { icon: '💴', text: '予算に合わせて費用を計算中...' },
-  { icon: '⛩️', text: '観光スポットを厳選しています...' },
-  { icon: '✨', text: 'あなただけのプランを仕上げています...' },
+  '最適なルートを考えています...',
+  '実在するホテルを本気で選んでいます...',
+  'おすすめレストランを探しています...',
+  'インスタ映えスポットを確認中...',
+  '交通手段と時刻を調べています...',
+  '予算に合わせて費用を計算中...',
+  '観光スポットを厳選しています...',
+  'あなただけのプランを仕上げています...',
 ];
 
 function LoadingScreen() {
@@ -62,41 +62,65 @@ function LoadingScreen() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const msgTimer = setInterval(() => {
-      setMsgIndex((i) => (i + 1) % LOADING_MESSAGES.length);
-    }, 2800);
-    const progTimer = setInterval(() => {
-      setProgress((p) => Math.min(p + 1.2, 90));
-    }, 400);
+    const msgTimer = setInterval(() => setMsgIndex((i) => (i + 1) % LOADING_MESSAGES.length), 2800);
+    const progTimer = setInterval(() => setProgress((p) => Math.min(p + 1.0, 88)), 350);
     return () => { clearInterval(msgTimer); clearInterval(progTimer); };
   }, []);
 
-  const msg = LOADING_MESSAGES[msgIndex];
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-gradient-to-br from-sky-50 via-white to-indigo-50">
-      <div className="w-full max-w-sm">
-        {/* アイコン */}
-        <div className="text-center mb-8">
-          <div className="text-7xl mb-2 transition-all duration-500" key={msgIndex}>{msg.icon}</div>
-          <h2 className="text-xl font-bold text-gray-800 mb-1">タビがプランを作成中</h2>
-          <p className="text-sm text-sky-600 font-medium min-h-[20px] transition-all duration-300">{msg.text}</p>
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-gradient-to-br from-sky-950 via-indigo-900 to-purple-900 overflow-hidden relative">
+
+      {/* 星ドット背景 */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+
+      {/* 飛行機のルートライン */}
+      <div className="absolute w-full" style={{ top: '42%' }}>
+        <div className="w-full border-t-2 border-dashed border-white/10" />
+      </div>
+
+      {/* 飛行機アニメーション */}
+      <div className="absolute w-full" style={{ top: '38%' }}>
+        <div style={{ animation: 'fly-across 6s ease-in-out infinite', position: 'absolute' }}>
+          <span style={{ fontSize: '2.5rem', filter: 'drop-shadow(0 0 8px rgba(14,165,233,0.8))' }}>✈️</span>
+        </div>
+      </div>
+
+      {/* メインコンテンツ */}
+      <div className="relative z-10 w-full max-w-sm text-center">
+
+        {/* タイトル */}
+        <div className="mb-8">
+          <h2 className="text-3xl font-black text-white mb-2">タビが計画中</h2>
+          <p className="text-sm text-white/60 min-h-[20px] transition-all duration-500 key-{msgIndex}">
+            {LOADING_MESSAGES[msgIndex]}
+          </p>
         </div>
 
         {/* プログレスバー */}
-        <div className="bg-gray-100 rounded-full h-2 mb-4 overflow-hidden">
+        <div className="bg-white/10 rounded-full h-2 mb-2 overflow-hidden backdrop-blur-sm">
           <div
-            className="h-full bg-gradient-to-r from-sky-500 to-indigo-600 rounded-full transition-all duration-500"
+            className="h-full rounded-full transition-all duration-500 shimmer-bg"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="text-center text-xs text-gray-400">通常10〜30秒かかります</p>
+        <p className="text-white/30 text-xs mb-10">{Math.round(progress)}% 完了</p>
+
+        {/* ステップ表示 */}
+        <div className="grid grid-cols-4 gap-2">
+          {['ルート設計', 'ホテル選び', 'グルメ調査', '仕上げ'].map((step, i) => (
+            <div key={step} className={`py-2 px-1 rounded-xl text-xs font-medium transition-all duration-500 ${progress > i * 25 ? 'bg-sky-500/30 text-sky-300 border border-sky-500/40' : 'bg-white/5 text-white/30 border border-white/10'}`}>
+              {progress > i * 25 && <span className="block text-base mb-0.5">✓</span>}
+              {step}
+            </div>
+          ))}
+        </div>
 
         {/* タビのひとこと */}
-        <div className="mt-8 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <p className="text-xs text-gray-500 leading-relaxed">
-            💡 <span className="font-medium text-gray-700">タビより：</span>
-            実在するお店・ホテルを1つずつ確認しながら作っています。少しお待ちください。
+        <div className="mt-8 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4">
+          <p className="text-xs text-white/50 leading-relaxed">
+            💡 <span className="text-white/70 font-medium">タビより：</span>
+            実在するお店・ホテルを1つずつ確認しながら作っています。
           </p>
         </div>
       </div>
@@ -469,14 +493,20 @@ function ResultContent() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-indigo-50 px-4 py-12">
       <div className="max-w-2xl mx-auto">
-        <div className="bg-gradient-to-r from-sky-500 to-indigo-600 rounded-3xl p-8 text-white mb-8 shadow-xl">
-          <p className="text-sm font-medium opacity-80 mb-1">📍 {plan.destination}</p>
-          <h1 className="text-2xl font-bold mb-3">{plan.title}</h1>
-          <p className="text-sm opacity-90 leading-relaxed">{plan.summary}</p>
+
+        {/* ヘッダー: シマーグラデーション */}
+        <div className="card-animate shimmer-bg rounded-3xl p-8 text-white mb-8 shadow-2xl relative overflow-hidden" style={{ animationDelay: '0ms' }}>
+          <div className="absolute inset-0 bg-black/20 rounded-3xl" />
+          <div className="relative z-10">
+            <p className="text-sm font-medium opacity-80 mb-1">📍 {plan.destination}</p>
+            <h1 className="text-2xl font-bold mb-3 leading-tight">{plan.title}</h1>
+            <p className="text-sm opacity-90 leading-relaxed">{plan.summary}</p>
+          </div>
         </div>
 
         {(plan.days ?? []).map((day) => (
-          <div key={day.day} className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-100">
+          <div key={day.day} className="card-animate bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-100"
+            style={{ animationDelay: `${day.day * 80}ms` }}>
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 bg-gradient-to-r from-sky-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">{day.day}</div>
               <div>

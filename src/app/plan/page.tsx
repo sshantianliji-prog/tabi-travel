@@ -27,13 +27,15 @@ function PlanContent() {
   const isGroupMode = searchParams.get('mode') === 'group';
 
   const [step, setStep] = useState(0);
+  const [stepKey, setStepKey] = useState(0); // アニメーション用キー
+  const [goingBack, setGoingBack] = useState(false);
   const [myName, setMyName] = useState('');
   const [nameEntered, setNameEntered] = useState(false);
   const [prefs, setPrefs] = useState<Partial<TravelPreferences>>({ interests: [] });
   const [creating, setCreating] = useState(false);
   const [apiError, setApiError] = useState('');
 
-  function advance() { setStep((s) => s + 1); }
+  function advance() { setGoingBack(false); setStep((s) => s + 1); setStepKey((k) => k + 1); }
 
   function selectSingle<T extends keyof Omit<TravelPreferences, 'interests'>>(key: T, value: TravelPreferences[T]) {
     setPrefs((p) => ({ ...p, [key]: value }));
@@ -111,13 +113,16 @@ function PlanContent() {
         <div className="mb-8">
           <div className="flex justify-between mb-2">
             {STEPS.map((_, i) => (
-              <div key={i} className={`h-2 flex-1 mx-0.5 rounded-full transition-all duration-300 ${i <= step ? 'bg-gradient-to-r from-sky-500 to-indigo-600' : 'bg-gray-200'}`} />
+              <div key={i} className={`h-2 flex-1 mx-0.5 rounded-full transition-all duration-500 ${i <= step ? 'bg-gradient-to-r from-sky-500 to-indigo-600' : 'bg-gray-200'}`} />
             ))}
           </div>
           <p className="text-center text-sm text-gray-500 mt-2">
             STEP {step + 1} / {STEPS.length}　<span className="font-semibold text-gray-700">{STEPS[step]}</span>
           </p>
         </div>
+
+        {/* ステップコンテンツをアニメーションでラップ */}
+        <div key={stepKey} className={goingBack ? 'step-enter-back' : 'step-enter'}>
 
         {/* Step 0: Travel Type */}
         {step === 0 && (
@@ -284,8 +289,11 @@ function PlanContent() {
           </StepSection>
         )}
 
+        </div>{/* step-enter wrapper end */}
+
         {step > 0 && (
-          <button onClick={() => setStep((s) => s - 1)} className="mt-6 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+          <button onClick={() => { setGoingBack(true); setStep((s) => s - 1); setStepKey((k) => k + 1); }}
+            className="mt-6 text-sm text-gray-400 hover:text-gray-600 transition-colors">
             ← 前に戻る
           </button>
         )}
