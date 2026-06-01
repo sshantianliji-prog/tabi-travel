@@ -4,11 +4,12 @@ import { NextRequest } from 'next/server';
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export interface DiscoverInput {
-  mood: string;       // 'relax' | 'active' | 'gourmet' | 'adventure'
-  themes: string[];   // ['nature','onsen','culture','sea','city','food']
-  duration: string;   // 'day-trip' | '1-2nights' | '3plus'
-  budget: string;     // 'low' | 'mid' | 'high'
-  travelType: string; // 'solo' | 'couple' | 'friends' | 'family'
+  mood: string;
+  themes: string[];
+  duration: string;
+  budget: string;
+  travelType: string;
+  departureLabel?: string; // 出発地の日本語名
   season?: string;
 }
 
@@ -60,6 +61,10 @@ export async function POST(req: NextRequest) {
     family: '家族',
   };
 
+  const departureLine = input.departureLabel
+    ? `- 出発地: ${input.departureLabel}（交通アクセスの良さも考慮して提案すること）`
+    : '';
+
   const prompt = `以下の条件から、日本国内の旅行先を4つ提案してください。
 
 【旅行者のプロフィール】
@@ -68,6 +73,7 @@ export async function POST(req: NextRequest) {
 - 興味テーマ: ${input.themes.join('、')}
 - 期間: ${durationLabels[input.duration] ?? input.duration}
 - 予算感: ${budgetLabels[input.budget] ?? input.budget}
+${departureLine}
 ${input.season ? `- 季節: ${input.season}` : ''}
 
 4つの提案はそれぞれ異なる地域・個性を持つ場所にしてください。

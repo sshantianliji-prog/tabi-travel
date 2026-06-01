@@ -8,10 +8,10 @@ import { getTransportFare, TransportFare as TransportFareType } from '@/lib/tran
 
 // 写真コンポーネント（スケルトン→写真→エラー時グラデーション）
 function PlacePhoto({
-  query, width = 600, height = 300, className = '', rounded = 'rounded-xl',
-}: { query: string; width?: number; height?: number; className?: string; rounded?: string }) {
+  query, type, width = 600, height = 300, className = '', rounded = 'rounded-xl',
+}: { query: string; type?: string; width?: number; height?: number; className?: string; rounded?: string }) {
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
-  const src = `/api/place-photo?q=${encodeURIComponent(query)}&w=${width}&h=${height}`;
+  const src = `/api/place-photo?q=${encodeURIComponent(query)}${type ? `&type=${type}` : ''}`;
 
   // 写真に合わせたグラデーション（エラー時フォールバック）
   const gradients = [
@@ -535,7 +535,7 @@ function ResultContent() {
 
         {/* ヘッダー: 目的地の写真 + グラデーションオーバーレイ */}
         <div className="card-animate rounded-3xl mb-8 shadow-2xl relative overflow-hidden" style={{ animationDelay: '0ms' }}>
-          <PlacePhoto query={`${plan.destination} sightseeing`} width={800} height={400} className="w-full" rounded="rounded-none" />
+          <PlacePhoto query={plan.destination} type="spot" width={800} height={400} className="w-full" rounded="rounded-none" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           <div className="absolute inset-0 shimmer-bg opacity-30" />
           <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -551,7 +551,7 @@ function ResultContent() {
 
             {/* Day ヘッダー写真 */}
             <div className="relative">
-              <PlacePhoto query={`${plan.destination} ${day.theme}`} width={800} height={200} className="w-full" rounded="rounded-none" />
+              <PlacePhoto query={day.theme.split('・')[0] || plan.destination} type="spot" width={800} height={200} className="w-full" rounded="rounded-none" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-3 left-4 flex items-center gap-2">
                 <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold text-sm border border-white/30">{day.day}</div>
@@ -570,7 +570,8 @@ function ResultContent() {
                     {/* スポット・食事・宿泊は写真を表示 */}
                     {(item.type === 'spot' || item.type === 'meal' || item.type === 'stay') && (
                       <PlacePhoto
-                        query={item.type === 'meal' ? `${item.place} japanese food` : item.type === 'stay' ? `${item.place} hotel japan` : `${item.place} ${plan.destination}`}
+                        query={item.place}
+                        type={item.type}
                         width={600} height={240}
                         className="w-full mb-2"
                         rounded="rounded-xl"

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { DiscoverInput, DestinationSuggestion } from '@/app/api/discover/route';
-import { REGION_LABELS } from '@/types/travel';
+import { REGION_LABELS, REGION_ICONS, REGION_GROUPS } from '@/types/travel';
 import type { Region } from '@/types/travel';
 
 // ── 選択肢定義 ─────────────────────────────────────
@@ -109,6 +109,7 @@ export default function DiscoverPage() {
   const [themes, setThemes] = useState<string[]>([]);
   const [duration, setDuration] = useState('');
   const [budget, setBudget] = useState('');
+  const [departureRegion, setDepartureRegion] = useState<Region | ''>('');
   const [suggestions, setSuggestions] = useState<DestinationSuggestion[]>([]);
   const [error, setError] = useState('');
 
@@ -117,9 +118,10 @@ export default function DiscoverPage() {
   }
 
   async function discover() {
-    setStep(4);
+    setStep(5); // ローディングステップ番号を+1
     setError('');
-    const input: DiscoverInput = { travelType, mood, themes, duration, budget };
+    const departureLabel = departureRegion ? REGION_LABELS[departureRegion] : undefined;
+    const input: DiscoverInput = { travelType, mood, themes, duration, budget, departureLabel };
     try {
       const res = await fetch('/api/discover', {
         method: 'POST',
@@ -129,10 +131,10 @@ export default function DiscoverPage() {
       const data = await res.json();
       if (data.__error) throw new Error(data.__error);
       setSuggestions(data.suggestions ?? []);
-      setStep(5);
+      setStep(6); // 結果ステップ
     } catch (e) {
       setError(e instanceof Error ? e.message : 'エラーが発生しました');
-      setStep(3);
+      setStep(4); // 予算ステップに戻る
     }
   }
 
@@ -152,7 +154,7 @@ export default function DiscoverPage() {
   }
 
   // ── ローディング ──
-  if (step === 4) {
+  if (step === 5) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-sky-950 via-indigo-900 to-purple-900 flex flex-col items-center justify-center px-4">
         <div className="text-center">
@@ -170,7 +172,7 @@ export default function DiscoverPage() {
   }
 
   // ── 結果 ──
-  if (step === 5) {
+  if (step === 6) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-indigo-50 px-4 py-10">
         <div className="max-w-2xl mx-auto">
@@ -187,7 +189,7 @@ export default function DiscoverPage() {
           </div>
 
           <div className="mt-8 flex gap-3">
-            <button onClick={() => { setStep(3); setSuggestions([]); }}
+            <button onClick={() => { setStep(4); setSuggestions([]); }}
               className="flex-1 py-3 border-2 border-gray-200 text-gray-500 rounded-2xl text-sm font-medium hover:bg-gray-50 transition-all">
               🔄 もう一度探す
             </button>
@@ -201,13 +203,6 @@ export default function DiscoverPage() {
   }
 
   // ── 質問フロー ──
-  const canNext = [
-    !!travelType,
-    !!mood && themes.length > 0,
-    !!duration,
-    !!budget,
-  ];
-
   const questions = [
     {
       title: '誰と旅行しますか？',
@@ -260,12 +255,39 @@ export default function DiscoverPage() {
       ),
     },
     {
+      title: 'どこから出発しますか？',
+      sub: '出発地を選ぶとアクセスしやすい旅先を提案します',
+      content: (
+        <div>
+          <div className="overflow-y-auto pr-1 space-y-4 mb-4" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+            {REGION_GROUPS.filter(g => g.label !== 'おまかせ').map(group => (
+              <div key={group.label}>
+                <p className="text-xs font-bold text-gray-400 tracking-wider mb-2">{group.label}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {group.regions.filter(k => k !== 'ai-suggest').map(key => (
+                    <button key={key} onClick={() => { setDepartureRegion(key as Region); setTimeout(() => setStep(3), 200); }}
+                      className={`flex flex-col items-center py-2 px-1 rounded-xl border-2 transition-all text-xs font-medium gap-0.5 ${departureRegion === key ? 'border-sky-500 bg-sky-50 text-sky-700 scale-105' : 'border-gray-200 bg-white text-gray-600 hover:border-sky-300'}`}>
+                      <span className="text-lg">{REGION_ICONS[key as Region]}</span>
+                      <span className="leading-tight text-center">{REGION_LABELS[key as Region]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setStep(3)} className="w-full py-3 border border-gray-300 text-gray-500 rounded-2xl text-sm hover:bg-gray-50 transition-all sticky bottom-4 bg-white">
+            スキップ（どこでも行ける）
+          </button>
+        </div>
+      ),
+    },
+    {
       title: '旅行の期間は？',
       sub: '大まかな日数を選んでください',
       content: (
         <div className="grid grid-cols-3 gap-4">
           {DURATIONS.map(d => (
-            <button key={d.id} onClick={() => { setDuration(d.id); setTimeout(() => setStep(3), 200); }}
+            <button key={d.id} onClick={() => { setDuration(d.id); setTimeout(() => setStep(4), 200); }}
               className={`flex flex-col items-center py-6 rounded-2xl border-2 transition-all ${duration === d.id ? 'border-sky-500 bg-sky-50 scale-105 shadow-md' : 'border-gray-200 bg-white hover:border-sky-300'}`}>
               <span className="text-4xl mb-2">{d.icon}</span>
               <span className="font-semibold text-gray-800 text-sm">{d.label}</span>
