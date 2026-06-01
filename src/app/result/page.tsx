@@ -6,6 +6,45 @@ import Link from 'next/link';
 import { TravelPreferences, REGION_LABELS } from '@/types/travel';
 import { getTransportFare, TransportFare as TransportFareType } from '@/lib/transport-fares';
 
+// 写真コンポーネント（スケルトン→写真→エラー時グラデーション）
+function PlacePhoto({
+  query, width = 600, height = 300, className = '', rounded = 'rounded-xl',
+}: { query: string; width?: number; height?: number; className?: string; rounded?: string }) {
+  const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
+  const src = `/api/place-photo?q=${encodeURIComponent(query)}&w=${width}&h=${height}`;
+
+  // 写真に合わせたグラデーション（エラー時フォールバック）
+  const gradients = [
+    'from-sky-400 to-indigo-500',
+    'from-emerald-400 to-teal-500',
+    'from-orange-400 to-pink-500',
+    'from-violet-400 to-purple-500',
+    'from-rose-400 to-orange-500',
+  ];
+  const grad = gradients[Math.abs(query.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % gradients.length];
+
+  return (
+    <div className={`relative overflow-hidden ${rounded} ${className}`} style={{ aspectRatio: `${width}/${height}` }}>
+      {status === 'loading' && (
+        <div className="absolute inset-0 bg-gray-100 animate-pulse" />
+      )}
+      {status === 'error' && (
+        <div className={`absolute inset-0 bg-gradient-to-br ${grad} flex items-center justify-center`}>
+          <span className="text-white/60 text-4xl">🗾</span>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={query}
+        loading="lazy"
+        className={`w-full h-full object-cover transition-opacity duration-500 ${status === 'ok' ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setStatus('ok')}
+        onError={() => setStatus('error')}
+      />
+    </div>
+  );
+}
+
 interface ScheduleItem {
   time: string;
   place: string;
@@ -494,44 +533,64 @@ function ResultContent() {
     <main className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-indigo-50 px-4 py-12">
       <div className="max-w-2xl mx-auto">
 
-        {/* ヘッダー: シマーグラデーション */}
-        <div className="card-animate shimmer-bg rounded-3xl p-8 text-white mb-8 shadow-2xl relative overflow-hidden" style={{ animationDelay: '0ms' }}>
-          <div className="absolute inset-0 bg-black/20 rounded-3xl" />
-          <div className="relative z-10">
+        {/* ヘッダー: 目的地の写真 + グラデーションオーバーレイ */}
+        <div className="card-animate rounded-3xl mb-8 shadow-2xl relative overflow-hidden" style={{ animationDelay: '0ms' }}>
+          <PlacePhoto query={`${plan.destination} sightseeing`} width={800} height={400} className="w-full" rounded="rounded-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+          <div className="absolute inset-0 shimmer-bg opacity-30" />
+          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
             <p className="text-sm font-medium opacity-80 mb-1">📍 {plan.destination}</p>
-            <h1 className="text-2xl font-bold mb-3 leading-tight">{plan.title}</h1>
-            <p className="text-sm opacity-90 leading-relaxed">{plan.summary}</p>
+            <h1 className="text-2xl font-bold mb-2 leading-tight">{plan.title}</h1>
+            <p className="text-sm opacity-85 leading-relaxed">{plan.summary}</p>
           </div>
         </div>
 
         {(plan.days ?? []).map((day) => (
-          <div key={day.day} className="card-animate bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-100"
+          <div key={day.day} className="card-animate bg-white rounded-2xl mb-6 shadow-sm border border-gray-100 overflow-hidden"
             style={{ animationDelay: `${day.day * 80}ms` }}>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 bg-gradient-to-r from-sky-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">{day.day}</div>
-              <div>
-                <p className="text-xs text-gray-400">Day {day.day}</p>
-                <p className="font-semibold text-gray-900">{day.theme}</p>
+
+            {/* Day ヘッダー写真 */}
+            <div className="relative">
+              <PlacePhoto query={`${plan.destination} ${day.theme}`} width={800} height={200} className="w-full" rounded="rounded-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute bottom-3 left-4 flex items-center gap-2">
+                <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold text-sm border border-white/30">{day.day}</div>
+                <div>
+                  <p className="text-xs text-white/70">Day {day.day}</p>
+                  <p className="font-semibold text-white text-sm">{day.theme}</p>
+                </div>
               </div>
             </div>
-            <div className="space-y-5">
+
+            <div className="p-5 space-y-5">
               {(day.schedule ?? []).map((item, i) => (
                 <div key={i} className="flex gap-3">
                   <span className="text-xs text-gray-400 whitespace-nowrap w-12 text-right mt-1 shrink-0">{item.time}</span>
-                  <div className="flex gap-3 flex-1">
-                    <span className="text-xl mt-0.5 shrink-0">{TYPE_ICONS[item.type] ?? '📌'}</span>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-gray-900 text-sm">{item.place}</p>
-                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.place + ' ' + (item.address ?? ''))}`}
-                          target="_blank" rel="noopener noreferrer"
-                          className="text-xs text-sky-500 hover:text-sky-600 border border-sky-200 rounded-full px-2 py-0.5 whitespace-nowrap">
-                          🗺️ 地図
-                        </a>
+                  <div className="flex-1">
+                    {/* スポット・食事・宿泊は写真を表示 */}
+                    {(item.type === 'spot' || item.type === 'meal' || item.type === 'stay') && (
+                      <PlacePhoto
+                        query={item.type === 'meal' ? `${item.place} japanese food` : item.type === 'stay' ? `${item.place} hotel japan` : `${item.place} ${plan.destination}`}
+                        width={600} height={240}
+                        className="w-full mb-2"
+                        rounded="rounded-xl"
+                      />
+                    )}
+                    <div className="flex gap-3">
+                      <span className="text-xl mt-0.5 shrink-0">{TYPE_ICONS[item.type] ?? '📌'}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-gray-900 text-sm">{item.place}</p>
+                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.place + ' ' + (item.address ?? ''))}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-sky-500 hover:text-sky-600 border border-sky-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                            🗺️ 地図
+                          </a>
+                        </div>
+                        {item.address && <p className="text-xs text-sky-500 mt-0.5">📍 {item.address}</p>}
+                        <p className="text-xs text-gray-500 mt-1 leading-relaxed">{item.description}</p>
+                        {item.price && <p className="text-xs text-green-600 mt-1 font-medium">💴 {item.price}</p>}
                       </div>
-                      {item.address && <p className="text-xs text-sky-500 mt-0.5">📍 {item.address}</p>}
-                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">{item.description}</p>
-                      {item.price && <p className="text-xs text-green-600 mt-1 font-medium">💴 {item.price}</p>}
                     </div>
                   </div>
                 </div>
